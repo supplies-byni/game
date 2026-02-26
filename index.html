@@ -2,35 +2,70 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cable Beast - KR Devs</title>
+<title>Cable Dog Clicker - KR Devs</title>
 <style>
 body {
     margin: 0;
-    background: #0a1f3c;
-    color: white;
-    font-family: Arial;
-    text-align: center;
+    font-family: Arial, sans-serif;
+    background: #fff3e0; /* soft playful background */
+    overflow: hidden;
 }
 
-.screen { display: none; padding-top: 50px; }
+.screen { display: none; width: 100vw; height: 100vh; text-align: center; }
 
-button {
-    background: #1e90ff;
-    border: none;
-    padding: 10px 20px;
-    margin: 10px;
-    font-size: 16px;
+#splash, #home { display:flex; flex-direction:column; justify-content:center; align-items:center; }
+
+#game {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding-top: 50px;
+}
+
+#left-panel { flex:1; text-align:center; }
+#center-panel { flex:2; text-align:center; position: relative; }
+#right-panel { flex:1; text-align:center; }
+
+#dog {
+    width: 200px;
+    height: 200px;
     cursor: pointer;
     transition: transform 0.1s;
 }
 
-button:hover { background: #187bcd; transform: scale(1.1); }
+#coins, #chaos {
+    font-size: 24px;
+    margin: 10px;
+}
 
-#beast { font-size: 80px; margin: 20px; transition: transform 0.1s; }
-#warning { color: red; font-weight: bold; }
-#shop button { display:block; margin:5px auto; }
+button {
+    padding: 8px 16px;
+    margin: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: transform 0.1s;
+}
+
+button:hover { transform: scale(1.1); }
+
+#shop button {
+    display:block;
+    margin:5px auto;
+}
+
 .pop { animation: pop 0.3s forwards; }
 @keyframes pop { 0% {transform: scale(1.5);} 100% {transform: scale(1);} }
+
+.coin-float {
+    position: absolute;
+    font-size: 24px;
+    animation: floatUp 1s forwards;
+}
+@keyframes floatUp {
+    0% { opacity:1; transform: translateY(0px);}
+    100% { opacity:0; transform: translateY(-80px);}
+}
+#warning { color: red; font-weight: bold; margin-top:10px; }
 </style>
 </head>
 <body>
@@ -43,25 +78,25 @@ button:hover { background: #187bcd; transform: scale(1.1); }
 
 <!-- Home -->
 <div id="home" class="screen">
-    <h1>Cable Beast</h1>
+    <h1>Cable Dog Clicker</h1>
     <button onclick="startGame()">Play</button>
     <button onclick="openSettings()">Settings</button>
 </div>
 
 <!-- Game -->
 <div id="game" class="screen">
-    <h2>Cable Beast</h2>
-    <div id="beast">🐕</div>
-    <p>Chaos: <span id="chaos">0</span></p>
-    <p>Coins: <span id="coins">0</span></p>
-    <p id="warning"></p>
-
-    <button onclick="clickBeast()">Untangle</button>
-
-    <h3>Upgrades</h3>
-    <div id="shop"></div>
-
-    <button onclick="goHome()">Back</button>
+    <div id="left-panel">
+        <p>Coins: <span id="coins">0</span></p>
+        <p>Chaos: <span id="chaos">0</span></p>
+        <p id="warning"></p>
+    </div>
+    <div id="center-panel">
+        <img id="dog" src="assets/dog.png" alt="Cable Dog" onclick="clickDog()">
+    </div>
+    <div id="right-panel">
+        <h3>Upgrades</h3>
+        <div id="shop"></div>
+    </div>
 </div>
 
 <!-- Settings -->
@@ -73,51 +108,65 @@ button:hover { background: #187bcd; transform: scale(1.1); }
 </div>
 
 <script>
-let chaos = 0;
 let coins = 0;
+let chaos = 0;
 let clickPower = 1;
 let cps = 0;
 let sfxOn = true;
 
-// 20 Upgrades
+// Cute dog upgrades (20 total)
 const upgrades = [
-{name:"Stronger Fingers", cost:10, type:"click", value:1},
-{name:"Better Grip", cost:50, type:"click", value:5},
-{name:"Wooper Assistant", cost:100, type:"cps", value:1},
-{name:"Cable Vacuum", cost:250, type:"cps", value:5},
-{name:"Turbo Fingers", cost:500, type:"click", value:10},
-{name:"Mini Wooper Squad", cost:1000, type:"cps", value:10},
-{name:"Magnet Gloves", cost:1500, type:"click", value:15},
-{name:"Auto Tangle Fixer", cost:2000, type:"cps", value:20},
-{name:"Legendary Wooper", cost:3000, type:"cps", value:50},
-{name:"Cable Wrangling Academy", cost:5000, type:"click", value:50},
-{name:"Shockwave Untangler", cost:7500, type:"click", value:75},
-{name:"Electric Wooper Corps", cost:10000, type:"cps", value:100},
-{name:"Quantum Cable Logic", cost:15000, type:"click", value:150},
-{name:"Cable Beast Whisperer", cost:20000, type:"cps", value:200},
-{name:"Wooper Mega Boost", cost:30000, type:"cps", value:500},
-{name:"Super Grip Gloves", cost:50000, type:"click", value:300},
+{name:"Tug Rope", cost:10, type:"click", value:1},
+{name:"Chew Toy", cost:50, type:"click", value:5},
+{name:"Mini Dog Helper", cost:100, type:"cps", value:1},
+{name:"Treat Dispenser", cost:250, type:"cps", value:5},
+{name:"Turbo Paw", cost:500, type:"click", value:10},
+{name:"Fetch Squad", cost:1000, type:"cps", value:10},
+{name:"Magnet Collar", cost:1500, type:"click", value:15},
+{name:"Auto Tidy Station", cost:2000, type:"cps", value:20},
+{name:"Golden Bone", cost:3000, type:"cps", value:50},
+{name:"Doggy Academy", cost:5000, type:"click", value:50},
+{name:"Shockwave Tail", cost:7500, type:"click", value:75},
+{name:"Woofy Corps", cost:10000, type:"cps", value:100},
+{name:"Quantum Leash", cost:15000, type:"click", value:150},
+{name:"Dog Whisperer", cost:20000, type:"cps", value:200},
+{name:"Mega Treat Boost", cost:30000, type:"cps", value:500},
+{name:"Super Paw Gloves", cost:50000, type:"click", value:300},
 {name:"Chaos Absorber", cost:75000, type:"cps", value:750},
-{name:"Ultra Cable Drone", cost:100000, type:"cps", value:1500},
-{name:"Legendary Beast Tamer", cost:250000, type:"click", value:1000},
-{name:"Infinite Wooper Portal", cost:500000, type:"cps", value:5000}
+{name:"Ultra Dog Drone", cost:100000, type:"cps", value:1500},
+{name:"Legendary Trainer", cost:250000, type:"click", value:1000},
+{name:"Infinite Bone Portal", cost:500000, type:"cps", value:5000}
 ];
 
-function showScreen(id){document.querySelectorAll(".screen").forEach(s=>s.style.display="none");document.getElementById(id).style.display="block";}
+// Screen management
+function showScreen(id){document.querySelectorAll(".screen").forEach(s=>s.style.display="none");document.getElementById(id).style.display="flex";}
 function startGame(){showScreen("game");}
 function openSettings(){showScreen("settings");}
 function goHome(){showScreen("home");}
 
-// Beast click
-function clickBeast(){
+// Dog click
+function clickDog(){
     coins += clickPower;
     chaos -= clickPower;
     if(chaos<0) chaos=0;
-    const beastEl = document.getElementById("beast");
-    beastEl.style.transform="scale(0.9)";
-    setTimeout(()=>beastEl.style.transform="scale(1)",100);
+    const dogEl = document.getElementById("dog");
+    dogEl.style.transform="scale(0.9) rotate(-10deg)";
+    setTimeout(()=>dogEl.style.transform="scale(1) rotate(0deg)",100);
+
+    spawnCoinPop();
     if(sfxOn) playSFX("click");
     update();
+}
+
+// Spawn coin pop-up
+function spawnCoinPop(){
+    const coin = document.createElement("div");
+    coin.className="coin-float";
+    coin.style.left = (window.innerWidth/2 + Math.random()*100 -50)+"px";
+    coin.style.top = (window.innerHeight/2)+"px";
+    coin.innerText="+1";
+    document.body.appendChild(coin);
+    setTimeout(()=>document.body.removeChild(coin),1000);
 }
 
 // Build shop
@@ -132,11 +181,11 @@ function buildShop(){
     });
 }
 
-// Buy upgrade with pop effect
+// Buy upgrade
 function buyUpgrade(i,btn){
     const u = upgrades[i];
-    if(coins >= u.cost){
-        coins -= u.cost;
+    if(coins>=u.cost){
+        coins-=u.cost;
         if(u.type==="click") clickPower+=u.value;
         if(u.type==="cps") cps+=u.value;
         u.cost=Math.floor(u.cost*1.5);
@@ -150,33 +199,27 @@ function buyUpgrade(i,btn){
 
 // Settings
 function toggleSFX(){ sfxOn=!sfxOn; }
-function resetGame(){ chaos=0; coins=0; clickPower=1; cps=0; buildShop(); update(); }
+function resetGame(){ coins=0; chaos=0; clickPower=1; cps=0; buildShop(); update(); }
 
 // Update UI
 function update(){
-    document.getElementById("chaos").innerText=chaos;
     document.getElementById("coins").innerText=coins;
-    if(chaos>75){document.getElementById("warning").innerText="THE BEAST IS EVOLVING";} 
-    else {document.getElementById("warning").innerText="";}
+    document.getElementById("chaos").innerText=chaos;
+    document.getElementById("warning").innerText = chaos>75 ? "CHAOS LEVEL HIGH!" : "";
 }
 
-// SFX placeholders
+// SFX
 function playSFX(type){
-    // Replace with your .mp3 files in assets folder
     const audio = new Audio(`assets/${type}.mp3`);
     audio.play();
 }
 
-// Chaos + CPS
-setInterval(()=>{
-    chaos+=1;
-    coins+=cps;
-    update();
-},1000);
+// CPS + chaos increment
+setInterval(()=>{ chaos+=1; coins+=cps; update(); },1000);
 
-// Splash screen sequence
+// Splash
 showScreen("splash");
-setTimeout(()=>{showScreen("home");},2000);
+setTimeout(()=>showScreen("home"),2000);
 
 buildShop();
 update();
