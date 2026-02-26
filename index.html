@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cable Beast - KR Devs</title>
+<style>
+body {
+    margin: 0;
+    background: #0a1f3c;
+    color: white;
+    font-family: Arial;
+    text-align: center;
+}
+
+.screen { display: none; padding-top: 50px; }
+
+button {
+    background: #1e90ff;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+button:hover { background: #187bcd; transform: scale(1.1); }
+
+#beast { font-size: 80px; margin: 20px; transition: transform 0.1s; }
+#warning { color: red; font-weight: bold; }
+#shop button { display:block; margin:5px auto; }
+.pop { animation: pop 0.3s forwards; }
+@keyframes pop { 0% {transform: scale(1.5);} 100% {transform: scale(1);} }
+</style>
+</head>
+<body>
+
+<!-- Splash -->
+<div id="splash" class="screen">
+    <h1>KR Devs</h1>
+    <p>Powered by Chaos Engine</p>
+</div>
+
+<!-- Home -->
+<div id="home" class="screen">
+    <h1>Cable Beast</h1>
+    <button onclick="startGame()">Play</button>
+    <button onclick="openSettings()">Settings</button>
+</div>
+
+<!-- Game -->
+<div id="game" class="screen">
+    <h2>Cable Beast</h2>
+    <div id="beast">🐕</div>
+    <p>Chaos: <span id="chaos">0</span></p>
+    <p>Coins: <span id="coins">0</span></p>
+    <p id="warning"></p>
+
+    <button onclick="clickBeast()">Untangle</button>
+
+    <h3>Upgrades</h3>
+    <div id="shop"></div>
+
+    <button onclick="goHome()">Back</button>
+</div>
+
+<!-- Settings -->
+<div id="settings" class="screen">
+    <h2>Settings</h2>
+    <button onclick="toggleSFX()">Toggle SFX</button>
+    <button onclick="resetGame()">Reset Save</button>
+    <button onclick="goHome()">Back</button>
+</div>
+
+<script>
+let chaos = 0;
+let coins = 0;
+let clickPower = 1;
+let cps = 0;
+let sfxOn = true;
+
+// 20 Upgrades
+const upgrades = [
+{name:"Stronger Fingers", cost:10, type:"click", value:1},
+{name:"Better Grip", cost:50, type:"click", value:5},
+{name:"Wooper Assistant", cost:100, type:"cps", value:1},
+{name:"Cable Vacuum", cost:250, type:"cps", value:5},
+{name:"Turbo Fingers", cost:500, type:"click", value:10},
+{name:"Mini Wooper Squad", cost:1000, type:"cps", value:10},
+{name:"Magnet Gloves", cost:1500, type:"click", value:15},
+{name:"Auto Tangle Fixer", cost:2000, type:"cps", value:20},
+{name:"Legendary Wooper", cost:3000, type:"cps", value:50},
+{name:"Cable Wrangling Academy", cost:5000, type:"click", value:50},
+{name:"Shockwave Untangler", cost:7500, type:"click", value:75},
+{name:"Electric Wooper Corps", cost:10000, type:"cps", value:100},
+{name:"Quantum Cable Logic", cost:15000, type:"click", value:150},
+{name:"Cable Beast Whisperer", cost:20000, type:"cps", value:200},
+{name:"Wooper Mega Boost", cost:30000, type:"cps", value:500},
+{name:"Super Grip Gloves", cost:50000, type:"click", value:300},
+{name:"Chaos Absorber", cost:75000, type:"cps", value:750},
+{name:"Ultra Cable Drone", cost:100000, type:"cps", value:1500},
+{name:"Legendary Beast Tamer", cost:250000, type:"click", value:1000},
+{name:"Infinite Wooper Portal", cost:500000, type:"cps", value:5000}
+];
+
+function showScreen(id){document.querySelectorAll(".screen").forEach(s=>s.style.display="none");document.getElementById(id).style.display="block";}
+function startGame(){showScreen("game");}
+function openSettings(){showScreen("settings");}
+function goHome(){showScreen("home");}
+
+// Beast click
+function clickBeast(){
+    coins += clickPower;
+    chaos -= clickPower;
+    if(chaos<0) chaos=0;
+    const beastEl = document.getElementById("beast");
+    beastEl.style.transform="scale(0.9)";
+    setTimeout(()=>beastEl.style.transform="scale(1)",100);
+    if(sfxOn) playSFX("click");
+    update();
+}
+
+// Build shop
+function buildShop(){
+    const shop = document.getElementById("shop");
+    shop.innerHTML="";
+    upgrades.forEach((u,i)=>{
+        const btn = document.createElement("button");
+        btn.innerText=`${u.name} - ${u.cost}`;
+        btn.onclick=()=>buyUpgrade(i,btn);
+        shop.appendChild(btn);
+    });
+}
+
+// Buy upgrade with pop effect
+function buyUpgrade(i,btn){
+    const u = upgrades[i];
+    if(coins >= u.cost){
+        coins -= u.cost;
+        if(u.type==="click") clickPower+=u.value;
+        if(u.type==="cps") cps+=u.value;
+        u.cost=Math.floor(u.cost*1.5);
+        btn.classList.add("pop");
+        setTimeout(()=>btn.classList.remove("pop"),300);
+        if(sfxOn) playSFX("upgrade");
+        buildShop();
+        update();
+    } else if(sfxOn){ playSFX("fail"); }
+}
+
+// Settings
+function toggleSFX(){ sfxOn=!sfxOn; }
+function resetGame(){ chaos=0; coins=0; clickPower=1; cps=0; buildShop(); update(); }
+
+// Update UI
+function update(){
+    document.getElementById("chaos").innerText=chaos;
+    document.getElementById("coins").innerText=coins;
+    if(chaos>75){document.getElementById("warning").innerText="THE BEAST IS EVOLVING";} 
+    else {document.getElementById("warning").innerText="";}
+}
+
+// SFX placeholders
+function playSFX(type){
+    // Replace with your .mp3 files in assets folder
+    const audio = new Audio(`assets/${type}.mp3`);
+    audio.play();
+}
+
+// Chaos + CPS
+setInterval(()=>{
+    chaos+=1;
+    coins+=cps;
+    update();
+},1000);
+
+// Splash screen sequence
+showScreen("splash");
+setTimeout(()=>{showScreen("home");},2000);
+
+buildShop();
+update();
+</script>
+</body>
+</html>
